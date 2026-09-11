@@ -1,35 +1,43 @@
 name: Build Android APK
+
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Unzip project
-        run: unzip -o MuhammadiReportCardApp.zip -d extracted
+        run: |
+          unzip -o MuhammadiReportCardApp.zip -d extracted
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-      - name: Build debug APK
-        working-directory: extracted/MuhammadiReportCard
-        run: gradle assembleDebug --no-daemon
+          java-version: "17"
+
+      - name: Find Gradle project
+        run: |
+          find extracted -name "gradlew" -type f
+
+      - name: Make gradlew executable
+        run: |
+          chmod +x $(find extracted -name "gradlew" -type f | head -1)
+
+      - name: Build APK
+        run: |
+          cd $(dirname $(find extracted -name "gradlew" -type f | head -1))
+          ./gradlew assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Muhammadi-Report-Card-APK
-          path: extracted/MuhammadiReportCard/app/build/outputs/apk/debug/app-debug.apk
+          name: MuhammadiReportCardApp
+          path: extracted/**/build/outputs/apk/**/*.apk
